@@ -6,12 +6,19 @@
 //
 
 import SwiftUI
+import Firebase
 
 struct ContentView: View {
     
     @State var isLogin = false
     @State var email = ""
     @State var password = ""
+    
+    init() {
+        
+        FirebaseApp.configure()
+        
+    }
     
     var body: some View {
         NavigationView{
@@ -67,6 +74,8 @@ struct ContentView: View {
                     
                     Button {
                         
+                        handleAction()
+                        
                     } label: {
                         HStack{
                             Spacer()
@@ -80,11 +89,35 @@ struct ContentView: View {
                 
                     
                 }.navigationTitle(isLogin ? "Login" : "Account Creation")
+                    
             }.padding()
-                .background(Color(.init(white: 0, alpha: 0.05)).ignoresSafeArea())
+            .background(Color(.init(white: 0, alpha: 0.05)).ignoresSafeArea())
+                
+            
+        }.navigationViewStyle(StackNavigationViewStyle())
+      
+    }
+    
+    private func handleAction() {
+        if isLogin {
+            print("Loging in....")
+        } else {
+            createNewAccount()
+        }
+    }
+    
+    private func createNewAccount(){
+        Auth.auth().createUser(withEmail: email, password: password) { result, error in
+            if let error = error {
+                
+                print("Failed to create User: ", error)
+                
+                return
+            }
+            
+            print("Sucessfully created a user: ", result?.user.uid ?? "")
             
         }
-      
     }
 }
 
