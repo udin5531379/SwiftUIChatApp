@@ -8,17 +8,33 @@
 import SwiftUI
 import Firebase
 
+class FirebaseManager: NSObject {
+    
+    let auth : Auth
+    let storage : Storage
+    static let shared = FirebaseManager()
+    
+    override init() {
+        FirebaseApp.configure()
+        self.auth = Auth.auth()
+        self.storage = Storage.storage()
+        super.init()
+    }
+    
+}
+
 struct ContentView: View {
     
     @State var isLogin = false
     @State var email = ""
     @State var password = ""
     
-    init() {
-        
-        FirebaseApp.configure()
-        
-    }
+    //For imagePicker
+    @State var changeProfileImage = false
+    
+    @State var imageSelected : UIImage?
+    
+   
     
     var body: some View {
         NavigationView{
@@ -41,13 +57,38 @@ struct ContentView: View {
                         
                     if !isLogin{
                         
-                        Button {
+                        VStack {
                             
-                        } label: {
-                            Image(systemName: "person.fill")
-                                .font(.system(size: 64))
-                                .padding()
-                                .foregroundColor(.black)
+                            //Presenting an image picker...
+                            Button {
+                                
+                                changeProfileImage.toggle()
+                        
+                                
+                                
+                            } label: {
+                                
+                                if let imageSelected = self.imageSelected {
+                                    
+                                    Image(uiImage: imageSelected)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 120, height: 120)
+                                        .clipShape(Circle())
+                                    
+                                } else {
+                                    
+                                    Image(systemName: "person.fill")
+                                        .font(.system(size: 64))
+                                        .padding()
+                                        .foregroundColor(.black)
+                                    
+                                }
+                                
+                            }
+                            
+                        }.fullScreenCover(isPresented: $changeProfileImage) {
+                            ImagePicker(selectedImage: $imageSelected)
                         }
                         
                     }
@@ -100,14 +141,19 @@ struct ContentView: View {
     
     private func handleAction() {
         if isLogin {
-            print("Loging in....")
+            
+            login()
+        
         } else {
+            
             createNewAccount()
+        
         }
     }
     
     private func createNewAccount(){
-        Auth.auth().createUser(withEmail: email, password: password) { result, error in
+        
+        FirebaseManager.shared.auth.createUser(withEmail: email, password: password) { result, error in
             if let error = error {
                 
                 print("Failed to create User: ", error)
@@ -117,6 +163,58 @@ struct ContentView: View {
             
             print("Sucessfully created a user: ", result?.user.uid ?? "")
             
+            persistImageToStorage()
+            
+        }
+        
+    }
+    
+    //used to save ProfileImage to firebase
+    private func persistImageToStorage() {
+        
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
+        
+        let ref = FirebaseManager.shared.storage.reference(withPath: uid)
+        
+        guard let imageData = self.imageSelected?.jpegData(compressionQuality: 0.5) else { return }
+        
+        ref.putData(imageData, metadata: nil) { metadata, err in
+            
+            if let err = err {
+                
+                print("Error: ", err)
+                
+                return
+            }
+            
+            ref.downloadURL { url, err in
+                if let err = err {
+                    
+                    print("Error downloading the url: ", err)
+                    
+                    return
+                
+                }
+                
+                print("Sucessfully stored the image with downloaded the url: ", url?.absoluteString ?? "")
+            }
+            
+        }
+        
+        
+        
+    }
+    
+    private func login(){
+        FirebaseManager.shared.auth.signIn(withEmail: email, password: password) { result, error in
+            if let error = error {
+                
+                print("Failed to login User: ", error)
+                
+                return
+            }
+            
+            print("Sucessfully logged in a user: ", result?.user.uid ?? "")
         }
     }
 }
