@@ -7,17 +7,23 @@
 
 import SwiftUI
 import Firebase
+import FirebaseFirestore
+
 
 class FirebaseManager: NSObject {
     
     let auth : Auth
     let storage : Storage
+    let firestore : Firestore
+    
     static let shared = FirebaseManager()
     
     override init() {
         FirebaseApp.configure()
         self.auth = Auth.auth()
         self.storage = Storage.storage()
+        self.firestore = Firestore.firestore()
+        
         super.init()
     }
     
@@ -196,12 +202,35 @@ struct ContentView: View {
                 
                 }
                 
+                
                 print("Sucessfully stored the image with downloaded the url: ", url?.absoluteString ?? "")
+                
+                guard let url = url else { return }
+                storeUserInformation(imageProfileURL: url)
             }
             
         }
         
         
+    }
+    
+    func storeUserInformation(imageProfileURL: URL) {
+        
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
+        
+        let userData = ["email": email, "uid": uid, "profileImageURL": imageProfileURL.absoluteString]
+        
+        FirebaseManager.shared.firestore.collection("user")
+            .addDocument(data: userData) { error in
+                
+                guard let error = error else { return }
+                
+                print ("Failed to save user in DB", error)
+                
+                return
+            }
+        
+        print("Sucessfully saved user in DB")
         
     }
     
