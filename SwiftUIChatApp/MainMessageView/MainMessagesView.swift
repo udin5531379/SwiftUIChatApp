@@ -28,7 +28,7 @@ class MainMessageViewModel: ObservableObject {
     
     }
     
-    private func fetchCurrentUser(){
+    func fetchCurrentUser(){
         
         
         guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
@@ -142,8 +142,11 @@ struct MainMessagesView: View {
                 }), .cancel() ])
             }
         
-        .fullScreenCover(isPresented: $vm.isUserLoggedOut, onDismiss: nil) {
-            LoginView()
+        .fullScreenCover(isPresented: $vm.isUserLoggedOut, onDismiss: nil) { //this fullscreencover is gonna create the content as soon as this view loads
+            LoginView(didCompleteLoginProcess: { //fullScreenCover ley view matra daykhayo.... then Login click gareysi which is in LoginView didCompleteLoginProcess() function execute huncha
+                self.vm.isUserLoggedOut = false
+                self.vm.fetchCurrentUser()
+            })
         }
         
         

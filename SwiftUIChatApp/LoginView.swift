@@ -12,9 +12,12 @@ import FirebaseFirestore
 
 struct LoginView: View {
     
+    let didCompleteLoginProcess : () -> ()
+    
     @State var isLogin = false
     @State var email = ""
     @State var password = ""
+    @State var message = ""
     
     //For imagePicker
     @State var changeProfileImage = false
@@ -89,7 +92,7 @@ struct LoginView: View {
                         
                         
                         SecureField("Password", text: $password)
-                            
+                        
                     }
                     .padding(14)
                     .background(Color.white)
@@ -115,6 +118,9 @@ struct LoginView: View {
                     }.cornerRadius(5)
                         .padding(.top)
                 
+                Text("\(message)")
+                        .foregroundColor(Color.red)
+                    
                     
                 }.navigationTitle(isLogin ? "Login" : "Account Creation")
                     
@@ -140,6 +146,10 @@ struct LoginView: View {
     
     private func createNewAccount(){
         
+        if imageSelected == nil {
+            print("Select an image")
+        }
+        
         FirebaseManager.shared.auth.createUser(withEmail: email, password: password) { result, error in
             if let error = error {
                 
@@ -158,6 +168,12 @@ struct LoginView: View {
     
     //used to save ProfileImage to firebase
     private func persistImageToStorage() {
+        
+        if imageSelected == nil {
+            
+            message = "Please select an image"
+            
+        }
         
         guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
         
@@ -212,6 +228,8 @@ struct LoginView: View {
         
         print("Sucessfully saved user in DB")
         
+        self.didCompleteLoginProcess()
+        
     }
     
     private func login(){
@@ -224,12 +242,16 @@ struct LoginView: View {
             }
             
             print("Sucessfully logged in a user: ", result?.user.uid ?? "")
+            
+            self.didCompleteLoginProcess()
         }
     }
 }
 
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
-        LoginView()
+        LoginView(didCompleteLoginProcess: {
+            
+        })
     }
 }
