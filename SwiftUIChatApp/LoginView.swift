@@ -10,26 +10,7 @@ import Firebase
 import FirebaseFirestore
 
 
-class FirebaseManager: NSObject {
-    
-    let auth : Auth
-    let storage : Storage
-    let firestore : Firestore
-    
-    static let shared = FirebaseManager()
-    
-    override init() {
-        FirebaseApp.configure()
-        self.auth = Auth.auth()
-        self.storage = Storage.storage()
-        self.firestore = Firestore.firestore()
-        
-        super.init()
-    }
-    
-}
-
-struct ContentView: View {
+struct LoginView: View {
     
     @State var isLogin = false
     @State var email = ""
@@ -220,8 +201,7 @@ struct ContentView: View {
         
         let userData = ["email": email, "uid": uid, "profileImageURL": imageProfileURL.absoluteString]
         
-        FirebaseManager.shared.firestore.collection("user")
-            .addDocument(data: userData) { error in
+        FirebaseManager.shared.firestore.collection("user").document(uid).setData(userData) { error in
                 
                 guard let error = error else { return }
                 
@@ -248,8 +228,8 @@ struct ContentView: View {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
+struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        LoginView()
     }
 }

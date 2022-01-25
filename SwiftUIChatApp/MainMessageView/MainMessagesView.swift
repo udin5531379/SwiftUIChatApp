@@ -6,8 +6,70 @@
 //
 
 import SwiftUI
+import SDWebImageSwiftUI
+
+struct ChatUser {
+    let email, profileImageURL, uid: String
+}
+
+class MainMessageViewModel: ObservableObject {
+    
+    @Published var chatUser: ChatUser?
+    
+    init() {
+        
+        //utill and unless the user is loggedin, LOGINVIEW will be shown
+        DispatchQueue.main.async{
+            self.isUserLoggedOut = FirebaseManager.shared.auth.currentUser?.uid == nil //user not logged in i.e uid == nil it is true
+        }
+        
+        
+        fetchCurrentUser()
+    
+    }
+    
+    private func fetchCurrentUser(){
+        
+        
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
+        
+        
+        FirebaseManager.shared.firestore.collection("user").document(uid).getDocument { snapshot, error in
+            
+            if let error = error {
+                print("Error in fetching the current users data", error)
+                return
+            }
+            
+            guard let data = snapshot?.data() else {
+                return
+            }
+            
+            let uid = data["uid"] as? String ?? ""
+            let email = data["email"] as? String ?? ""
+            let profileImageURL = data["profileImageURL"] as? String ?? ""
+            self.chatUser = ChatUser(email: email, profileImageURL: profileImageURL, uid: uid)
+            
+            
+        }
+        
+    }
+    
+    @Published var isUserLoggedOut =  false
+    
+    func handleUserSignout() {
+        
+        isUserLoggedOut.toggle()
+        try? FirebaseManager.shared.auth.signOut()
+        
+    }
+    
+}
+
 
 struct MainMessagesView: View {
+    
+    @ObservedObject var vm  = MainMessageViewModel()
     
     @State var shouldShowLogoutOptions = false
     
@@ -29,14 +91,18 @@ struct MainMessagesView: View {
     
     private var customNavBar: some View {
         
+        
         HStack(spacing: 16){
             
-            Image(systemName: "person.fill")
-                .font(.system(size: 40))
-            
+            WebImage(url: URL(string: vm.chatUser?.profileImageURL ?? ""))
+                .resizable()
+                .scaledToFill()
+                .frame(width: 80, height: 80)
+                .clipped()
+                .cornerRadius(44)
             VStack(alignment: .leading, spacing: 3) {
                 
-                Text("Username")
+                Text("\(vm.chatUser?.email ?? "")")
                     .font(.system(size: 27, weight: .bold))
                 
             
@@ -67,14 +133,18 @@ struct MainMessagesView: View {
 
             
         }.padding(.horizontal)
-            .actionSheet(isPresented: $shouldShowLogoutOptions) {
+        .actionSheet(isPresented: $shouldShowLogoutOptions) {
                 .init(title: Text("Settings"), message: Text("What do you want to do?"), buttons:
                         [.destructive(Text("Signout"), action: {
                     
                     print("Handle Signout")
-                    
+                    self.vm.handleUserSignout()
                 }), .cancel() ])
             }
+        
+        .fullScreenCover(isPresented: $vm.isUserLoggedOut, onDismiss: nil) {
+            LoginView()
+        }
         
         
     }
