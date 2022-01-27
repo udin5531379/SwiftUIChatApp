@@ -8,10 +8,6 @@
 import SwiftUI
 import SDWebImageSwiftUI
 
-struct ChatUser {
-    let email, profileImageURL, uid: String
-}
-
 class MainMessageViewModel: ObservableObject {
     
     @Published var chatUser: ChatUser?
@@ -45,10 +41,7 @@ class MainMessageViewModel: ObservableObject {
                 return
             }
             
-            let uid = data["uid"] as? String ?? ""
-            let email = data["email"] as? String ?? ""
-            let profileImageURL = data["profileImageURL"] as? String ?? ""
-            self.chatUser = ChatUser(email: email, profileImageURL: profileImageURL, uid: uid)
+            self.chatUser = ChatUser(data: data)
             
             
         }
@@ -190,11 +183,13 @@ struct MainMessagesView: View {
         
     }
     
+    @State var isNewMessageViewOnTheScreen = false
     
     private var newMessageButton: some View {
         Button {
             
             print("New Message Pressed")
+            self.isNewMessageViewOnTheScreen.toggle()
             
         } label: {
             
@@ -211,6 +206,8 @@ struct MainMessagesView: View {
                 .padding(.horizontal)
             
         
+        }.fullScreenCover(isPresented: $isNewMessageViewOnTheScreen, onDismiss: nil) {
+            NewMessageView()
         }
     }
     
