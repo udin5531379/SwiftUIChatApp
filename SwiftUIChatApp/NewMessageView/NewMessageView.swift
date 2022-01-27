@@ -6,39 +6,53 @@
 //
 
 import SwiftUI
+import SDWebImageSwiftUI
 
 struct NewMessageView: View {
     
     @ObservedObject var vm = CreateNewUserViewModel()
+    @Environment (\.presentationMode) var presentationMode
     
     var body: some View {
         
-        ScrollView {
-            
-            VStack {
-                ForEach(vm.users, id: \.self) { user in
-                    
-                    HStack {
-                        Image(systemName: "person.fill")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 40, height: 40)
-                            .padding()
+        NavigationView {
+            ScrollView {
+                
+                VStack {
+                    ForEach(vm.users, id: \.self) { user in
+                        VStack(spacing: 5.0) {
+                            HStack {
+                                WebImage(url: URL(string: user.profileImageURL))
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 70, height: 70)
+                                    .clipped()
+                                    .cornerRadius(44)
+                                    .padding(.horizontal)
+                                
+                                Text("\(user.email)")
+                                    
+                                
+                                Spacer()
+                            }
+                            
+                            Divider()
+                        }
                         
-                        Text("\(user.email)")
-                            .padding()
                         
-                        Spacer()
                     }
                     
                 }
-                
-                Text("\(vm.message)")
-                
-            }
+            }.navigationTitle("New Message")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Cancel") {
+                                presentationMode.wrappedValue.dismiss()
+                        }
+                    }
+                }
         }
-        
-        
+ 
     }
 }
 
@@ -65,7 +79,6 @@ class CreateNewUserViewModel: ObservableObject {
             snapshots.forEach { ss in
                 
                 let data = ss.data()
-//                self.message = "\(data)"
                 let user = ChatUser(data: data)
                 
                 if user.uid != uid {
