@@ -21,19 +21,28 @@ struct NewMessageView: View {
                 VStack {
                     ForEach(vm.users, id: \.self) { user in
                         VStack(spacing: 5.0) {
-                            HStack {
-                                WebImage(url: URL(string: user.profileImageURL))
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 70, height: 70)
-                                    .clipped()
-                                    .cornerRadius(44)
-                                    .padding(.horizontal)
-                                
-                                Text("\(user.email)")
+                            
+                            Button {
+                                self.presentationMode.wrappedValue.dismiss()
+                            } label: {
+                                HStack {
+                                    WebImage(url: URL(string: user.profileImageURL))
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 70, height: 70)
+                                        .clipped()
+                                        .cornerRadius(44)
+                                        .padding(.horizontal)
                                     
+                                    Text("\(user.email)")
+                                        .bold()
+                                        .foregroundColor(.black)
+                                        
+                                    
+                                    Spacer()
+                                }
                                 
-                                Spacer()
+                                
                             }
                             
                             Divider()
@@ -78,7 +87,7 @@ class CreateNewUserViewModel: ObservableObject {
             
             snapshots.forEach { ss in
                 
-                let data = ss.data()
+                let data = ss.data() //data dictionary
                 let user = ChatUser(data: data)
                 
                 if user.uid != uid {

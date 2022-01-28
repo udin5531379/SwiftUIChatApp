@@ -206,7 +206,7 @@ struct MainMessagesView: View {
                 .padding(.horizontal)
             
         
-        }.fullScreenCover(isPresented: $isNewMessageViewOnTheScreen, onDismiss: nil) {
+        }.sheet(isPresented: $isNewMessageViewOnTheScreen, onDismiss: nil) {
             NewMessageView()
         }
     }
