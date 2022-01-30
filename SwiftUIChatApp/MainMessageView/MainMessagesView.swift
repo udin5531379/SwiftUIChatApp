@@ -29,7 +29,6 @@ class MainMessageViewModel: ObservableObject {
         
         guard let uid = FirebaseManager.shared.auth.currentUser?.uid else { return }
         
-        
         FirebaseManager.shared.firestore.collection("user").document(uid).getDocument { snapshot, error in
             
             if let error = error {
@@ -75,6 +74,10 @@ struct MainMessagesView: View {
                 customNavBar
                 
                 messagesView
+                
+                NavigationLink("", isActive: $shouldNavigateToChatLogView) {
+                    ChatLogView(chatUser: self.chatUser)
+                }
                 
             }.overlay(newMessageButton, alignment: .bottom)
             
@@ -136,7 +139,7 @@ struct MainMessagesView: View {
             }
         
         .fullScreenCover(isPresented: $vm.isUserLoggedOut, onDismiss: nil) { //this fullscreencover is gonna create the content as soon as this view loads
-            LoginView(didCompleteLoginProcess: { //fullScreenCover ley view matra daykhayo.... then Login click gareysi which is in LoginView didCompleteLoginProcess() function execute huncha
+            LoginView(didCompleteLoginProcess: {                             //fullScreenCover ley view matra daykhayo.... then Login click gareysi which is in                                                                             LoginView didCompleteLoginProcess() function execute huncha
                 self.vm.isUserLoggedOut = false
                 self.vm.fetchCurrentUser()
             })
@@ -152,27 +155,35 @@ struct MainMessagesView: View {
             ForEach(0..<10, id: \.self) { num in
                 
                 VStack{
-                    HStack(spacing: 18) {
-                        
-                        Image(systemName: "person.fill")
-                            .padding(5)
-                            .font(.system(size: 32, weight: .heavy))
-                            .overlay(RoundedRectangle(cornerRadius: 44)
-                                        .stroke(Color(.label), lineWidth: 1))
-                        
-                        VStack(alignment: .leading){
-                            Text("Username")
-                                .font(.system(size: 16, weight: .bold))
-                            Text("Message sent to user")
-                                .font(.system(size: 14))
-                                .foregroundColor(.gray)
-                        }
-                        
-                        Spacer()
-                        
-                        Text("22d")
-                        
-                    }.padding()
+                    
+                    NavigationLink {
+                        ChatLogView(chatUser: chatUser)
+                    } label: {
+                        HStack(spacing: 18) {
+                            
+                            Image(systemName: "person.fill")
+                                .padding(5)
+                                .font(.system(size: 32, weight: .heavy))
+                                .overlay(RoundedRectangle(cornerRadius: 44)
+                                            .stroke(Color(.label), lineWidth: 1))
+                            
+                            VStack(alignment: .leading){
+                                Text("Username")
+                                    .font(.system(size: 16, weight: .bold))
+                                    
+                                Text("Message sent to user")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gray)
+                            }
+                            
+                            Spacer()
+                            
+                            Text("22d")
+                                .foregroundColor(Color.black)
+                            
+                        }.padding()
+                            .foregroundColor(Color.black)
+                    }
                     
                     Divider()
                 
@@ -184,6 +195,8 @@ struct MainMessagesView: View {
     }
     
     @State var isNewMessageViewOnTheScreen = false
+    @State var shouldNavigateToChatLogView = false
+    @State var chatUser : ChatUser?
     
     private var newMessageButton: some View {
         Button {
@@ -207,7 +220,13 @@ struct MainMessagesView: View {
             
         
         }.sheet(isPresented: $isNewMessageViewOnTheScreen, onDismiss: nil) {
-            NewMessageView()
+            NewMessageView(didSelectNewUser: { user in  //user being passed back from callback..NewMessageView ma chahe button click gareysi forEach users ko euta user select huncha...
+                print(user.email)                       //Tyo user chahe this view "MainMessageView" ma pass huncha and that user ko chahe email print gareyko
+                
+                self.shouldNavigateToChatLogView.toggle()
+                self.isNewMessageViewOnTheScreen = false
+                self.chatUser = user
+            })
         }
     }
     

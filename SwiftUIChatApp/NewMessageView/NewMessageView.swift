@@ -10,8 +10,11 @@ import SDWebImageSwiftUI
 
 struct NewMessageView: View {
     
+  
     @ObservedObject var vm = CreateNewUserViewModel()
     @Environment (\.presentationMode) var presentationMode
+    
+    var didSelectNewUser: (ChatUser) -> () //callback function
     
     var body: some View {
         
@@ -21,9 +24,8 @@ struct NewMessageView: View {
                 VStack {
                     ForEach(vm.users, id: \.self) { user in
                         VStack(spacing: 5.0) {
-                            
                             Button {
-                                self.presentationMode.wrappedValue.dismiss()
+                                didSelectNewUser(user)
                             } label: {
                                 HStack {
                                     WebImage(url: URL(string: user.profileImageURL))
@@ -34,7 +36,7 @@ struct NewMessageView: View {
                                         .cornerRadius(44)
                                         .padding(.horizontal)
                                     
-                                    Text("\(user.email)")
+                                    Text("\(user.email)") //displaying the emails
                                         .bold()
                                         .foregroundColor(.black)
                                         
@@ -107,6 +109,6 @@ class CreateNewUserViewModel: ObservableObject {
 
 struct NewMessageView_Previews: PreviewProvider {
     static var previews: some View {
-        NewMessageView()
+        NewMessageView(didSelectNewUser: {_ in })
     }
 }
