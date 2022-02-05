@@ -6,18 +6,40 @@
 //
 
 import SwiftUI
+import Firebase
 
 class ChatLogViewModel : ObservableObject {
     
     @Published var textMessage: String = ""
     
-    init() {
-        
+    let chatUser : ChatUser?
+    
+    init(chatUser: ChatUser?) {
+        self.chatUser = chatUser
     }
     
     func handleSendText(text: String) {
         
-        print(text)
+        guard let fromID = FirebaseManager.shared.auth.currentUser?.uid else { return }
+        
+        guard let toID = chatUser?.uid else { return }
+        
+        print("Sending message to: \(toID ) & mesasge is: \(text)...")
+        
+        let document = FirebaseManager.shared.firestore.collection("messages").document(fromID).collection(toID).document()
+        
+        let messageData = ["fromID": fromID, "toID": toID, "textMessage": text, "timestamp ": Timestamp()] as [String : Any]
+        
+        document.setData(messageData) { [self] error in
+            if let error = error {
+                
+                print(error)
+                return
+                
+            }
+            
+            print("Message Sent to \(chatUser?.email ?? "") having uid \(toID) from \(fromID)")
+        }
         
     }
     
@@ -26,10 +48,13 @@ class ChatLogViewModel : ObservableObject {
 struct ChatLogView: View {
     
     let chatUser: ChatUser?
+    @ObservedObject var vm : ChatLogViewModel //first ma chahe empty
     
-    @ObservedObject var vm = ChatLogViewModel()
-    
-    
+    init(chatUser: ChatUser?) {
+        self.chatUser = chatUser //"white" chatUser is bahera bata aako chatUser...
+        self.vm = ChatLogViewModel(chatUser: chatUser)
+    }
+
     var body: some View {
         
         ZStack {
